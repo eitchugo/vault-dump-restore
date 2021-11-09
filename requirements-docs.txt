@@ -1,0 +1,4 @@
+sphinx
+sphinx-rtd-theme
+recommonmark
+docutils==0.16
