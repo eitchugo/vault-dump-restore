@@ -150,6 +150,10 @@ class VaultDumpKeys:
             key_path = "".join(path[:-1])
             key = path[-1]
 
+            # add quotes if needed
+            key = self._quotify_single(key)
+            value = self._quotify_single(value)
+
             if key_path == old_key_path:
                 # reuse the same key_path
                 new_line = f"{new_line} '{key}'='{value}'"
@@ -213,3 +217,20 @@ class VaultDumpKeys:
             next_element = next(iterable, self._sentinel)
             yield (next_element is self._sentinel, current_element)
             current_element = next_element
+
+    def _quotify_single(self, string):
+        """
+        Adds bash quotes around a single quote. This is useful when a key
+        or secret has the single quote character ('), which should be
+        escaped.
+
+        For example::
+            mytesting'123 turns into: mytesting'"'"'123
+
+        Args:
+            string (str): String to be escaped
+
+        Returns:
+            string: Escaped string
+        """
+        return string.replace("'", "'\"'\"'")
