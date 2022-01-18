@@ -1,4 +1,4 @@
-.PHONY: clean-pyc clean-build clean build install docker docs
+.PHONY: clean-pyc clean-build clean build install dist upload docs
 
 CURRENT_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 APP_VERSION := $(shell python3 -c "from src.vault_dump_restore import __version__; print(__version__)")
@@ -22,6 +22,12 @@ build: clean-build
 
 install:
 	pip3 install .
+
+dist: clean-build
+	python3 -m build
+
+upload:
+	python3 -m twine upload dist/*
 
 docs:
 	pip3 install -r requirements-docs.txt
