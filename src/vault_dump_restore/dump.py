@@ -151,8 +151,8 @@ class VaultDumpKeys:
             key = path[-1]
 
             # add quotes if needed
-            key = self._quotify_single(key)
-            value = self._quotify_single(value)
+            key = self._quotify_single(str(key))
+            value = self._quotify_single(str(value))
 
             if key_path == old_key_path:
                 # reuse the same key_path
