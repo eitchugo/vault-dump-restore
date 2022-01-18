@@ -2,6 +2,13 @@
 
 Here you can see a full list of changes between each release.
 
+## 0.4.2
+
+Released on Jan 18th, 2022
+
+* Now forcing passing strings to `quotify` method since it uses the
+  `str.replace` method.
+
 ## 0.4.1
 
 Released on Jan 17th, 2022

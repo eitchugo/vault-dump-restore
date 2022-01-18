@@ -13,7 +13,7 @@ long_description = (this_directory / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name="vault-dump-restore",
-    version='0.4.1',
+    version='0.4.2',
     description='Dumps keys from a Hashicorp Vault instance to be able to restore it on another instance',
     long_description=long_description,
     long_description_content_type='text/markdown',
