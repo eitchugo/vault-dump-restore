@@ -154,6 +154,10 @@ class VaultDumpKeys:
             key = self._quotify_single(str(key))
             value = self._quotify_single(str(value))
 
+            # escape '@' in the beginning of value because vault consider it a file ref
+            if value.startswith("@"):
+                value = f"\{value}"
+
             if key_path == old_key_path:
                 # reuse the same key_path
                 new_line = f"{new_line} '{key}'='{value}'"

@@ -2,6 +2,14 @@
 
 Here you can see a full list of changes between each release.
 
+## 0.4.3
+
+Released on Jan 20th, 2022
+
+* On vault client command output, when the value begins with '@',
+  the vault client assumes it's a file reference, so we escape it
+  on the ouput.
+
 ## 0.4.2
 
 Released on Jan 18th, 2022
