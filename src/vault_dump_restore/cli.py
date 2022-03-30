@@ -170,10 +170,18 @@ def dump():
     parser.add_argument(
         '-o',
         '--output',
-        help='Choose output format. Could be: (json|vault). Defaults to json.',
+        help='Choose output format. Could be: (json|vault). Defaults to vault.',
         dest="output",
-        default='json'
+        default='vault'
     )
+
+    parser.add_argument(
+        '-t',
+        '--type',
+        help='Dump a certain type of secret engine. Currently supports: secrets, transit. Defaults to secrets.',
+        dest="type",
+        default='secrets'
+    )    
 
     # parse the arguments, show in the screen if needed
     parser = parser.parse_args()
@@ -187,21 +195,33 @@ def dump():
     if not parser.output == "json" and not parser.output == "vault":
         logger.error(f"Invalid output format {parser.output}")
 
+    # check if secrets engine type is valid
+    if not parser.type == "secrets" and not parser.type == "transit":
+        logger.error(f"Invalid secrets engine type {parser.type}")
+
     dump = VaultDumpKeys(
         os.getenv("VAULT_ADDR"),
         os.getenv("VAULT_TOKEN"),
     )
 
-    secrets_dump = dump.dump(parser.path, parser.secrets_mask)
+    if parser.type == "secrets":
+        secrets_dump = dump.dump_kv(parser.path, parser.secrets_mask)
+    elif parser.type == "transit":
+        secrets_dump = dump.dump_transit(parser.path, parser.secrets_mask)
 
     # JSON output
     if parser.output == "json":
-        print(dump.dump_to_json(secrets_dump))
+        print(dump.dump_to_json(secrets_dump, 2))
 
     # Vault client commands output
-    elif parser.output == "vault":
+    elif parser.output == "vault" and parser.type == "secrets":
         path_prefix = parser.path.lstrip("/")
-        commands_dump = dump.dump_to_vault(secrets_dump, path_prefix)
+        commands_dump = dump.dump_kv_to_vault(secrets_dump, path_prefix)
+        for command in commands_dump:
+            print(command)
+
+    elif parser.output == "vault" and parser.type == "transit":
+        commands_dump = dump.dump_transit_to_vault(secrets_dump)
         for command in commands_dump:
             print(command)
 
@@ -246,5 +266,7 @@ def restore():
         os.getenv("VAULT_ADDR"),
         os.getenv("VAULT_TOKEN"),
     )
+
+    print("Command not implemented yet. Try the vault output and run a restore as a shell script.")
 
     return 0

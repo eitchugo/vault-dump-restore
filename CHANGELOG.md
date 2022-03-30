@@ -2,6 +2,20 @@
 
 Here you can see a full list of changes between each release.
 
+## 0.5.1
+
+Released on Mar 27th, 2022
+
+* Fixed transit dump when a engine has no keys
+
+## 0.5.0
+
+Released on Mar 26th, 2022
+
+* Added support for backing up transit keys and their respective engines
+* Added "-t" parameter to specify which engine type (secrets or transit)
+* Output now defaults to vault since the json method is still not completed
+
 ## 0.4.3
 
 Released on Jan 20th, 2022

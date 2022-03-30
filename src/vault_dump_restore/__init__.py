@@ -7,4 +7,4 @@
     another instance.
 """
 __author__ = 'Hugo cisneiros'
-__version__ = "0.4.3"
+__version__ = "0.5.1"

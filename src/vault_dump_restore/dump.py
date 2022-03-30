@@ -30,7 +30,7 @@ class VaultDumpKeys:
         )
         self._sentinel = object()
 
-    def dump(self, path, mask=False, root=False):
+    def dump_kv(self, path, mask=False, root=False):
         """
         Dumps a path recursively with all keys and values.
 
@@ -61,7 +61,7 @@ class VaultDumpKeys:
                 except KeyError:
                     continue
 
-                results[engine] = self.dump(path=engine, mask=mask, root=True)
+                results[engine] = self.dump_kv(path=engine, mask=mask, root=True)
         else:
             # split into the secret engine name and the actual secret path
             path_args = path.split("/")
@@ -87,7 +87,7 @@ class VaultDumpKeys:
 
                 # recursively list keys within this path
                 for key in listing:
-                    results[key] = self.dump(path=f"{mount_point}/{path}{key}", mask=mask)
+                    results[key] = self.dump_kv(path=f"{mount_point}/{path}{key}", mask=mask)
             else:
                 # this is a secret, we read it
                 try:
@@ -103,6 +103,51 @@ class VaultDumpKeys:
                 if mask:
                     for key in results:
                         results[key] = "<hidden>"
+
+        return results
+
+    def dump_transit(self, path, root=False):
+        """
+        Dumps a path recursively with all transit keys.
+
+        Args:
+            path (str): Path to look for keys.
+            root (bool): If True, we treat the tree as the root of an engine,
+                which uses a list and not a get.
+
+        Returns:
+            dict: all keys and values from the path
+        """
+        results = {}
+
+        # when dumping the root
+        if path == "/":
+            # returns a list of secret engines
+            engines = self.hvac_client.sys.list_mounted_secrets_engines()['data']
+            for engine, values in engines.items():
+                # we only select transit types
+                try:
+                    if not values['type'] == "transit":
+                        continue
+                except KeyError:
+                    continue
+
+                results[engine] = self.dump_transit(path=engine, root=True)
+
+        else:
+            try:
+                keys = self.hvac_client.secrets.transit.list_keys(
+                    mount_point=path
+                )['data']['keys']
+            except (hvac.exceptions.InvalidPath, KeyError):
+                # the secret engine is empty - it doesn't have any keys
+                keys = []
+
+            for key in keys:
+                try:
+                    results[key] = self.hvac_client.secrets.transit.backup_key(key, path)['data']['backup']
+                except hvac.exceptions.InternalServerError:
+                    pass
 
         return results
 
@@ -122,13 +167,13 @@ class VaultDumpKeys:
         """
         return json.dumps(dump, indent=indent)
 
-    def dump_to_vault(self, dump, path_prefix=""):
+    def dump_kv_to_vault(self, dump, path_prefix=""):
         """
-        Transforms a dump into a series of vault client commands
+        Transforms a key-value dump into a series of vault client commands
         
         Args:
             dump (dict): Secrets dump to transform. This can be
-                generated using the method dump.
+                generated using the method dump_kv.
             path_prefix (str|Optional): Prefix to be used before all lines.
                 Defaults to an empty string.
 
@@ -178,6 +223,26 @@ class VaultDumpKeys:
                 lines.append(f"vault kv put '{path_prefix}{new_line}")
 
             old_key_path = key_path
+
+        return lines
+
+    def dump_transit_to_vault(self, dump):
+        """
+        Transforms a transit keys dump into a series of vault client commands
+        
+        Args:
+            dump (dict): Transit Keys dump to transform. This can be
+                generated using the method dump_transit.
+
+        Returns:
+            list: One command per item
+        """
+        lines = []
+        #print(json.dumps(dump, indent=2))
+        for engine, keys in dump.items():
+            lines.append(f"vault secrets enable -path='{engine}' transit")
+            for key, value in keys.items():
+                lines.append(f"vault write {engine}restore/{key} 'backup'='{value}'")
 
         return lines
 
